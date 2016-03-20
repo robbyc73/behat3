@@ -1,172 +1,167 @@
-Symfony Standard Edition
-========================
+// testing with Behat 3
+//install symfony project
+composer create-project symfony/framework-standard-edition /var/www/html/behat 2.4.10 
 
-Welcome to the Symfony Standard Edition - a fully-functional Symfony2
-application that you can use as the skeleton for your new applications.
+//dependencies
+composer require --dev behat/mink-extension behat/mink-goutte-driver
+composer require --dev behat/mink-selenium2-driver behat/symfony2-extension 
+composer require --dev phpunit/phpunit
 
-This document contains information on how to download, install, and start
-using Symfony. For a more detailed explanation, see the [Installation][1]
-chapter of the Symfony Documentation.
+// initialize behat(Symfony2)
+bin/behat --init
 
-1) Installing the Standard Edition
-----------------------------------
+// modify FeatureContext class to extend MinkContext
 
-When it comes to installing the Symfony Standard Edition, you have the
-following options.
+//add Php Unit to FeatureContext class
+require_once __DIR__.'/../../vendor/phpunit/phpunit/src/Framework/Assert/Functions.php';
 
-### Use Composer (*recommended*)
+//add missing steps to feature context if required or use builtin,  see output /bin/behat -dl
+bin/behat --append-snippets
 
-As Symfony uses [Composer][2] to manage its dependencies, the recommended way
-to create a new project is to use it.
 
-If you don't have Composer yet, download it following the instructions on
-http://getcomposer.org/ or just run the following command:
+//create behat.yml in project root
+default:
+    extensions:
+        Behat\MinkExtension:
+            base_url: https://en.wikipedia.org
+            goutte: ~
+            selenium2: ~
 
-    curl -s http://getcomposer.org/installer | php
+//create feature file in features directory(example uses built in features(hacky!) )
+Feature: Search
+  In order to find a word definition
+  As a website user
+  I am able to search for a word
 
-Then, use the `create-project` command to generate a new Symfony application:
+  Background:
+    Given I am on "/wiki/Main_Page"
 
-    php composer.phar create-project symfony/framework-standard-edition path/to/install
+  @javascript
+  Scenario Outline: Search for a word that exists
+    When I fill in "searchInput" with "<search>"
+    And I press "searchButton"
+    Then I should see "<expectation>"
 
-Composer will install Symfony and all its dependencies under the
-`path/to/install` directory.
+  Examples:
+    | search             | expectation                      |
+    | Velociraptor       | an enlarged sickle-shaped claw   |
+    | Tyrannosaurus Bill | Search results                   |
 
-### Download an Archive File
 
-To quickly test Symfony, you can also download an [archive][3] of the Standard
-Edition and unpack it somewhere under your web server root directory.
 
-If you downloaded an archive "without vendors", you also need to install all
-the necessary dependencies. Download composer (see above) and run the
-following command:
+//run selenium server
+java -jar  ~/Downloads/selenium-server-standalone-2.52.0.jar
 
-    php composer.phar install
+//run test
+bin/behat features/search.feature
 
-2) Checking your System Configuration
--------------------------------------
 
-Before starting coding, make sure that your local system is properly
-configured for Symfony.
+//run ls cmd, create feature file with following, then run bin/behat --append-snippets
+Feature:
+  In order to see the directory structure
+  As a UNIX user
+  I need to be able to list the current directories contents
 
-Execute the `check.php` script from the command line:
+  #will apply to both Scenarios
+  Background:
+    Given I have a file named "john"
 
-    php app/check.php
+  Scenario: List 2 files in a directory
+    And I have a file named "hammond"
+    When I run "ls"
+    Then I should see "john" in the output
+    And I should see "hammond" in the output
 
-The script returns a status code of `0` if all mandatory requirements are met,
-`1` otherwise.
+  Scenario: List 1 file and 1 directory
+    And a directory named "ingen"
+    When I run "ls"
+    Then I should see "john" in the output
+    And I should see "ingen" in the output
 
-Access the `config.php` script from a browser:
+//then add commands to snippets
+    /**
+     * @Given I have a file named :filename
+     */
+    public function iHaveAFileNamed($filename)
+    {
+        touch($filename);
+    }
 
-    http://localhost/path/to/symfony/app/web/config.php
+    /**
+     * @When I run :command
+     */
+    public function iRun($command)
+    {
+        $this->output = shell_exec($command);
+    }
 
-If you get any warnings or recommendations, fix them before moving on.
+    /**
+     * @Then I should see :string in the output
+     */
+    public function iShouldSeeInTheOutput($string)
+    {
+        if(strpos($this->output,$string) === false)
+            throw new \Exception(sprintf('Did not see "%s" in output "%s"', $string, $this->output));
 
-3) Browsing the Demo Application
---------------------------------
+    }
 
-Congratulations! You're now ready to use Symfony.
 
-From the `config.php` page, click the "Bypass configuration and go to the
-Welcome page" link to load up your first Symfony page.
+//before and after scenario in feature context runs on start and completion respectively, part of hook system
+    /**
+     * @BeforeScenario
+     */
+    public function moveIntoTestDir() {
+        if(!is_dir("test"))
+            mkdir("test");
 
-You can also use a web-based configurator by clicking on the "Configure your
-Symfony Application online" link of the `config.php` page.
+        chdir("test");
+    }
 
-To see a real-live Symfony page in action, access the following page:
+    /**
+     * @AfterScenario
+     */
+    public function moveOutOftestDir() {
+        chdir("..");
+        if(is_dir("test"))
+            shell_exec("rm test/*");
+    }
 
-    web/app_dev.php/demo/hello/Fabien
 
-4) Getting started with Symfony
--------------------------------
+//use assertContains in iShouldSeeInTheOutput() to throw an exception
+       assertContains(
+            $string,
+            $this->output,
+            sprintf('Did not see "%s" in the output "%s"', $string, $this->output)
+        );
 
-This distribution is meant to be the starting point for your Symfony
-applications, but it also contains some sample code that you can learn from
-and play with.
+//always use background statement to avoid duplication of steps
 
-A great way to start learning Symfony is via the [Quick Tour][4], which will
-take you through all the basic features of Symfony2.
 
-Once you're feeling good, you can move onto reading the official
-[Symfony2 book][5].
+//run a function after the completion of each step
+    /**
+     * @AfterStep
+     */
+    public function afterStepHook() {
+        var_dump('After step!');
+    }
 
-A default bundle, `AcmeDemoBundle`, shows you Symfony2 in action. After
-playing with it, you can remove it by following these steps:
 
-  * delete the `src/Acme` directory;
+// see mink.php for example of page searching, clicking links etc
 
-  * remove the routing entry referencing AcmeDemoBundle in `app/config/routing_dev.yml`;
+// add following to behat.yml, gives a bunch of other built in options for navigating web pages, viewable by bin/behat -dl,expand on this later!
+    suites:
+        default:
+            contexts:
+                - FeatureContext
+                - Behat\MinkExtension\Context\MinkContext
 
-  * remove the AcmeDemoBundle from the registered bundles in `app/AppKernel.php`;
 
-  * remove the `web/bundles/acmedemo` directory;
 
-  * empty the `security.yml` file or tweak the security configuration to fit
-    your needs.
 
-What's inside?
----------------
 
-The Symfony Standard Edition is configured with the following defaults:
 
-  * Twig is the only configured template engine;
 
-  * Doctrine ORM/DBAL is configured;
 
-  * Swiftmailer is configured;
 
-  * Annotations for everything are enabled.
 
-It comes pre-configured with the following bundles:
 
-  * **FrameworkBundle** - The core Symfony framework bundle
-
-  * [**SensioFrameworkExtraBundle**][6] - Adds several enhancements, including
-    template and routing annotation capability
-
-  * [**DoctrineBundle**][7] - Adds support for the Doctrine ORM
-
-  * [**TwigBundle**][8] - Adds support for the Twig templating engine
-
-  * [**SecurityBundle**][9] - Adds security by integrating Symfony's security
-    component
-
-  * [**SwiftmailerBundle**][10] - Adds support for Swiftmailer, a library for
-    sending emails
-
-  * [**MonologBundle**][11] - Adds support for Monolog, a logging library
-
-  * [**AsseticBundle**][12] - Adds support for Assetic, an asset processing
-    library
-
-  * **WebProfilerBundle** (in dev/test env) - Adds profiling functionality and
-    the web debug toolbar
-
-  * **SensioDistributionBundle** (in dev/test env) - Adds functionality for
-    configuring and working with Symfony distributions
-
-  * [**SensioGeneratorBundle**][13] (in dev/test env) - Adds code generation
-    capabilities
-
-  * **AcmeDemoBundle** (in dev/test env) - A demo bundle with some example
-    code
-
-All libraries and bundles included in the Symfony Standard Edition are
-released under the MIT or BSD license.
-
-Enjoy!
-
-[1]:  http://symfony.com/doc/2.4/book/installation.html
-[2]:  http://getcomposer.org/
-[3]:  http://symfony.com/download
-[4]:  http://symfony.com/doc/2.4/quick_tour/the_big_picture.html
-[5]:  http://symfony.com/doc/2.4/index.html
-[6]:  http://symfony.com/doc/2.4/bundles/SensioFrameworkExtraBundle/index.html
-[7]:  http://symfony.com/doc/2.4/book/doctrine.html
-[8]:  http://symfony.com/doc/2.4/book/templating.html
-[9]:  http://symfony.com/doc/2.4/book/security.html
-[10]: http://symfony.com/doc/2.4/cookbook/email.html
-[11]: http://symfony.com/doc/2.4/cookbook/logging/monolog.html
-[12]: http://symfony.com/doc/2.4/cookbook/assetic/asset_management.html
-[13]: http://symfony.com/doc/2.4/bundles/SensioGeneratorBundle/index.html
-# behat3
-# behat3
