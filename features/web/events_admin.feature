@@ -4,7 +4,7 @@ Feature: Events Admin
   I need to be able to add, edit, and delete events
 
   Background:
-    Given I am on "/login"
+    Given I am on "http://localhost/starwarsevents/web/app_dev.php/login"
     And I fill in "username" with "rob"
     And I fill in "password" with "ed209"
     And I press "loginButton"
