@@ -1,4 +1,6 @@
 default:
+    autoload: [ %paths.base%/contexts ]
+
     extensions:
         Behat\MinkExtension:
            # base_url: http://localhost/starwarsevents/web/app_dev.php
@@ -16,13 +18,16 @@ default:
         #    contexts:
          #       - FeatureContext
           #      - Behat\MinkExtension\Context\MinkContext
-        #ls-module:
-         #   contexts:
-          #      - FeatureContextLs
-           #     - Behat\MinkExtension\Context\MinkContext
+        commands:
+            paths: [ %paths.base%/features/commands ]
+            contexts:
+                - FeatureContextLs
+                - Behat\MinkExtension\Context\MinkContext
 
-        #search-module:
-        #    contexts:
-         #       - FeatureContext
-          #      - Behat\MinkExtension\Context\MinkContext
+        web:
+            paths: [ %paths.base%/features/web ]
+            contexts:
+                - SearchWikiContext
+                - Behat\MinkExtension\Context\MinkContext
+
 
