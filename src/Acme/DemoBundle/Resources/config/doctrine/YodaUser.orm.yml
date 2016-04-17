@@ -1,0 +1,43 @@
+Acme\DemoBundle\Entity\YodaUser:
+    type: entity
+    table: yoda_user
+    id:
+        id:
+            type: integer
+            nullable: false
+            unsigned: false
+            id: true
+            generator:
+                strategy: IDENTITY
+    fields:
+        username:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+        email:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+        password:
+            type: string
+            nullable: false
+            length: 255
+            fixed: false
+        roles:
+            type: array
+            nullable: false
+        isActive:
+            type: boolean
+            nullable: false
+            column: is_active
+    manyToMany:
+        event:
+            targetEntity: YodaEvent
+            cascade: {  }
+            mappedBy: user
+            inversedBy: null
+            joinTable: null
+            orderBy: null
+    lifecycleCallbacks: {  }

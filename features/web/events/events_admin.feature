@@ -4,14 +4,16 @@ Feature: Events Admin
   I need to be able to add, edit, and delete events
 
   Background:
-    Given I am on "http://localhost/starwarsevents/web/app_dev.php/login"
-    And I fill in "username" with "rob"
-    And I fill in "password" with "ed209"
+    Given there is an admin user "robbie3" with password "pwd3"
+    And I am on "http://localhost/starwarsevents/web/app_dev.php/"
+    When I follow "loginLink"
+    And I fill in "username" with "robbie3"
+    And I fill in "password" with "pwd3"
     And I press "loginButton"
 
   @javascript
   Scenario: Create Event
-    Then I should see "/"
+    #Then I should see "http://localhost/starwarsevents/web/app_dev.php/"
     And I follow "newLink"
     Then I should see "New Event"
     And I fill in "event_name" with "some random event 5"

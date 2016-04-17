@@ -13,5 +13,6 @@ Feature: Events Login
     And I fill in "username" with "robbie3"
     And I fill in "password" with "pwd3"
     And I press "loginButton"
-    Then I should see "logoutLink"
+    #Then I should see "logoutLink"
+    Then I should see "New Event"
     #Then show last response

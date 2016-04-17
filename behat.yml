@@ -7,6 +7,8 @@ default:
             base_url: https://en.wikipedia.org
             goutte: ~
             selenium2: ~
+            show_cmd: 'firefox %s'
+        Behat\Symfony2Extension: ~
 
     suites:
         default:
@@ -24,10 +26,22 @@ default:
                 - FeatureContextLs
                 - Behat\MinkExtension\Context\MinkContext
 
-        web:
-            paths: [ %paths.base%/features/web ]
+        search:
+            paths: [ %paths.base%/features/web/search ]
             contexts:
                 - SearchWikiContext
+                - Behat\MinkExtension\Context\MinkContext
+
+        events:
+            paths: [ %paths.base%/features/web/events ]
+            contexts:
+                - EventsContext
+                - Behat\MinkExtension\Context\MinkContext
+
+        authenticate:
+            paths: [ %paths.base%/features/web/authenticate ]
+            contexts:
+                - AuthenticateContext
                 - Behat\MinkExtension\Context\MinkContext
 
 

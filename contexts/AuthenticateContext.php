@@ -18,7 +18,7 @@ require_once __DIR__.'/../vendor/phpunit/phpunit/src/Framework/Assert/Functions.
 /**
  * Defines application features from the specific context.
  */
-class SearchWikiContext extends RawMinkContext implements Context, SnippetAcceptingContext
+class AuthenticateContext extends RawMinkContext implements Context, SnippetAcceptingContext
 {
 
     use \Behat\Symfony2Extension\Context\KernelDictionary;
@@ -35,6 +35,15 @@ class SearchWikiContext extends RawMinkContext implements Context, SnippetAccept
     }
 
     /**
+     * @BeforeScenario
+     */
+    public function clearData() {
+
+        $purger = new ORMPurger($this->getContainer()->get('doctrine')->getManager());
+        $purger->purge();
+    }
+
+    /**
      * @return \Behat\Mink\Element\DocumentElement
      */
     private function getPage()
@@ -44,24 +53,27 @@ class SearchWikiContext extends RawMinkContext implements Context, SnippetAccept
 
 
     /**
-     * @When I fill in the search box with :term
+     * @Given there is an admin user :username with password :password
      */
-    public function iFillInTheSearchBoxWith($term)
+    public function thereIsAnAdminUserWithPassword($username, $password)
     {
-        $searchBox = $this->assertSession()
-            ->elementExists('css', 'input[name="search"]');
 
-        $searchBox->setValue($term);
+        $user = new \Acme\DemoBundle\Entity\YodaUser();
+        $user->setUsername($username);
+        $user->setPassword($this->encodePassword($user,$password));
+        $user->setEmail('robcampbell73@gmail.com');
+        $user->setIsActive(true);
+        $user->setRoles(array("ROLE_ADMIN"));
+
+        $em = $this->getContainer()->get('doctrine')->getManager();
+        $em->persist($user);
+        $em->flush();
     }
 
-    /**
-     * @When I press the search button
-     */
-    public function iPressTheSearchButton()
+    private function encodePassword(\Acme\DemoBundle\Entity\YodaUser $user, $plainPassword)
     {
-        $button = $this->assertSession()
-            ->elementExists('css', '#searchButton');
-        $button->press();
+        $encoder = $this->getContainer()->get('security.encoder_factory')
+            ->getEncoder($user);
+        return $encoder->encodePassword($plainPassword, $user->getSalt());
     }
-
 }
